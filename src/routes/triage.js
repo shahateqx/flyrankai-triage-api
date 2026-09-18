@@ -15,6 +15,13 @@ const promptPath = path.join(__dirname, "../../prompts", `triage-${PROMPT_VERSIO
 const systemPrompt = fs.readFileSync(promptPath, "utf-8");
 
 function getLogDir() {
+  if (process.env.VERCEL) {
+    const dir = "/tmp/logs";
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    return dir;
+  }
   const dir = path.join(__dirname, "../../logs");
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
