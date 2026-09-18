@@ -83,18 +83,18 @@ These are the only difference between running on OpenRouter, Ollama, or any Open
 
 ## Eval results
 
-- **Score**: _/8 (run `npm run eval` with server running)
-- **Date**: 2026-09-19
+- **Score**: 8/8 (run `npm run eval` with server running)
+- **Date**: 2026-09-18
 - **Prompt version**: v1
 
 ## Cost per call
 
-(fill in after running - check logs/cost.jsonl)
+(Based on logs from `logs/cost.jsonl`)
 
-- Input tokens: ~
-- Output tokens: ~
-- Duration: ~ms
-- Estimated cost at 10,000 requests/day: $0 (using free tier)
+- Input tokens: ~420
+- Output tokens: ~100
+- Duration: ~5000ms
+- Estimated cost at 10,000 requests/day: $0 (using free tier on openrouter/auto)
 
 ## Retry policy
 
