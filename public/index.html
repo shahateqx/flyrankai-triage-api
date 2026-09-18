@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Message Triage</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-xl w-full bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-indigo-600 px-6 py-4">
+            <h1 class="text-xl font-bold text-white">Support Message Triage</h1>
+            <p class="text-indigo-100 text-sm mt-1">Classify customer messages with AI</p>
+        </div>
+        
+        <div class="p-6">
+            <form id="triageForm" class="space-y-4">
+                <div>
+                    <label for="messageText" class="block text-sm font-medium text-gray-700 mb-1">Customer Message</label>
+                    <textarea 
+                        id="messageText" 
+                        rows="4" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+                        placeholder="E.g., I was charged twice for my subscription this month"
+                        required
+                    ></textarea>
+                </div>
+                <button 
+                    type="submit" 
+                    id="submitBtn"
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md shadow-sm transition-colors duration-200 flex justify-center items-center"
+                >
+                    Classify Message
+                </button>
+            </form>
+
+            <div id="loadingIndicator" class="hidden mt-6 text-center text-gray-500 text-sm">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-600 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Calling LLM...
+            </div>
+
+            <div id="resultContainer" class="hidden mt-6 bg-gray-50 border border-gray-200 rounded-md p-4">
+                <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Analysis Result</h3>
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <p class="text-xs text-gray-500">Category</p>
+                        <p id="resCategory" class="font-semibold text-gray-900 capitalize"></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Urgency</p>
+                        <p id="resUrgency" class="font-semibold text-gray-900 capitalize"></p>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <p class="text-xs text-gray-500">Confidence</p>
+                    <div class="flex items-center mt-1">
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 mr-2">
+                            <div id="resConfidenceBar" class="bg-indigo-600 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <span id="resConfidenceText" class="text-xs font-medium text-gray-700"></span>
+                    </div>
+                </div>
+                
+                <div>
+                    <p class="text-xs text-gray-500">Reasoning</p>
+                    <p id="resReason" class="text-sm text-gray-700 mt-1"></p>
+                </div>
+            </div>
+            
+            <div id="errorContainer" class="hidden mt-6 bg-red-50 border border-red-200 rounded-md p-4">
+                <h3 class="text-sm font-medium text-red-800 mb-1">Error</h3>
+                <p id="errorText" class="text-sm text-red-600"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('triageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const text = document.getElementById('messageText').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loadingIndicator');
+            const resultContainer = document.getElementById('resultContainer');
+            const errorContainer = document.getElementById('errorContainer');
+            
+            // UI state
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50');
+            loading.classList.remove('hidden');
+            resultContainer.classList.add('hidden');
+            errorContainer.classList.add('hidden');
+            
+            try {
+                const response = await fetch('/triage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to analyze message');
+                }
+                
+                // Populate results
+                document.getElementById('resCategory').textContent = data.category;
+                document.getElementById('resCategory').className = `font-semibold capitalize ${
+                    data.category === 'billing' ? 'text-green-600' :
+                    data.category === 'bug' ? 'text-red-600' :
+                    data.category === 'feature' ? 'text-blue-600' : 'text-gray-600'
+                }`;
+                
+                document.getElementById('resUrgency').textContent = data.urgency;
+                document.getElementById('resUrgency').className = `font-semibold capitalize ${
+                    data.urgency === 'high' ? 'text-red-600' :
+                    data.urgency === 'normal' ? 'text-orange-600' : 'text-green-600'
+                }`;
+                
+                const confidencePct = Math.round(data.confidence * 100);
+                document.getElementById('resConfidenceBar').style.width = `${confidencePct}%`;
+                document.getElementById('resConfidenceText').textContent = `${confidencePct}%`;
+                
+                document.getElementById('resReason').textContent = data.reason;
+                
+                resultContainer.classList.remove('hidden');
+                
+            } catch (err) {
+                document.getElementById('errorText').textContent = err.message;
+                errorContainer.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50');
+                loading.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
