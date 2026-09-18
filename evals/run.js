@@ -55,7 +55,10 @@ for (let i = 0; i < cases.length; i++) {
   }
 }
 
-console.log(`\nResults: ${passed}/${cases.length} passed (${Math.round((passed / cases.length) * 100)}%)`);
+console.log(`\n--- Eval Results ---`);
+console.log(`Date: ${new Date().toISOString().split("T")[0]}`);
+console.log(`Prompt version: v1`);
+console.log(`Results: ${passed}/${cases.length} passed (${Math.round((passed / cases.length) * 100)}%)`);
 
 if (failures.length > 0) {
   console.log(`\nFailed cases:`);
