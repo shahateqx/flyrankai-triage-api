@@ -10,4 +10,6 @@ const client = new OpenAI({
   maxRetries: 0,
 });
 
+console.log(`[llm] provider: ${process.env.LLM_BASE_URL}, model: ${process.env.LLM_MODEL}, timeout: 30s, sdk retries: off`);
+
 export { client };
